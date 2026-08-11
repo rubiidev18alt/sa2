@@ -20,6 +20,19 @@ set(SDL_SHARED ON CACHE BOOL "" FORCE)
 set(SDL_STATIC OFF CACHE BOOL "" FORCE)
 add_subdirectory("${SDL2_DIR}" "${CMAKE_CURRENT_BINARY_DIR}/SDL2" EXCLUDE_FROM_ALL)
 
+# The original project generates a large set of binary assets (.4bpp, .8bpp,
+# .gbapal, .lz, .rl, entity .bin files, etc.) as Make dependencies. Android's
+# CMake build bypasses that Make dependency graph, so explicitly run the same
+# asset build before invoking the host preprocessor.
+find_program(SA2_MAKE_EXECUTABLE NAMES make gmake REQUIRED)
+add_custom_target(sa2_assets ALL
+    COMMAND ${SA2_MAKE_EXECUTABLE} -j2 PLATFORM=sdl GAME=GAME_SA2 GAME_NAME=sa2 NODEP=0 tools
+    COMMAND ${SA2_MAKE_EXECUTABLE} -j2 PLATFORM=sdl GAME=GAME_SA2 GAME_NAME=sa2 NODEP=0 sdl
+    WORKING_DIRECTORY "${SA2_ROOT}"
+    COMMENT "Generating SA2 extracted assets"
+    VERBATIM
+)
+
 if(SA2_PREPROC_HOST)
     if(NOT EXISTS "${SA2_PREPROC_HOST}")
         message(FATAL_ERROR "SA2_PREPROC_HOST does not exist: ${SA2_PREPROC_HOST}")
@@ -40,17 +53,7 @@ else()
     target_compile_options(sa2_preproc_host PRIVATE -O2 -Wno-unused-parameter)
 endif()
 
-if(ANDROID_ABI MATCHES "^(arm64-v8a|armeabi-v7a)$")
-    set(SA2_CPU_ARCH_ARM 1)
-else()
-    set(SA2_CPU_ARCH_ARM 0)
-endif()
-
-if(ANDROID_ABI MATCHES "^(x86|x86_64)$")
-    set(SA2_CPU_ARCH_X86 1)
-else()
-    set(SA2_CPU_ARCH_X86 0)
-endif()
+add_dependencies(sa2_preproc_host sa2_assets)
 
 file(GLOB_RECURSE SA2_SOURCES CONFIGURE_DEPENDS "${SA2_ROOT}/src/*.c")
 list(FILTER SA2_SOURCES EXCLUDE REGEX ".*/src/platform/win32/.*")
@@ -72,8 +75,8 @@ set(SA2_CPP_DEFINES
     -DPLATFORM_SDL=1
     -DPLATFORM_WIN32=0
     -DPLATFORM_ANDROID=1
-    -DCPU_ARCH_X86=${SA2_CPU_ARCH_X86}
-    -DCPU_ARCH_ARM=${SA2_CPU_ARCH_ARM}
+    -DCPU_ARCH_X86=0
+    -DCPU_ARCH_ARM=1
     -DPORTABLE=1
     -DDEBUG=0
     -DENABLE_DECOMP_CREDITS=1
@@ -92,7 +95,7 @@ foreach(SOURCE IN LISTS SA2_SOURCES)
             -I${SA2_ROOT}/include -I${SDL2_DIR}/include
             "${SOURCE}" -o "${PP_FILE}"
         COMMAND $<TARGET_FILE:sa2_preproc_host> "${PP_FILE}" sdl "" "${GENERATED_FILE}"
-        DEPENDS "${SOURCE}" sa2_preproc_host
+        DEPENDS "${SOURCE}" sa2_preproc_host sa2_assets
         WORKING_DIRECTORY "${SA2_ROOT}"
         VERBATIM
     )
@@ -104,7 +107,7 @@ add_library(main SHARED ${SA2_GENERATED_SOURCES})
 target_compile_definitions(main PRIVATE
     GAME=GAME_SA2 GAME_REGION=USA GAME_VARIANT=DEFAULT
     PLATFORM_GBA=0 PLATFORM_SDL=1 PLATFORM_WIN32=0 PLATFORM_ANDROID=1
-    CPU_ARCH_X86=${SA2_CPU_ARCH_X86} CPU_ARCH_ARM=${SA2_CPU_ARCH_ARM} PORTABLE=1 DEBUG=0
+    CPU_ARCH_X86=0 CPU_ARCH_ARM=1 PORTABLE=1 DEBUG=0
     ENABLE_DECOMP_CREDITS=1 TITLE_BAR=sa2_android
 )
 target_include_directories(main PRIVATE
