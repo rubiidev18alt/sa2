@@ -9,7 +9,15 @@ on:
 
 jobs:
   build:
+    name: Android ${{ matrix.abi }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        abi:
+          - arm64-v8a
+          - armeabi-v7a
+
     steps:
       - uses: actions/checkout@v4
 
@@ -54,10 +62,13 @@ jobs:
 
       - name: Build debug APK
         working-directory: android
-        run: gradle assembleDebug -PSA2_PREPROC_HOST="$GITHUB_WORKSPACE/android/host-tools/sa2_preproc"
+        run: gradle assembleDebug -PSA2_PREPROC_HOST="$GITHUB_WORKSPACE/android/host-tools/sa2_preproc" -PSA2_ABI="${{ matrix.abi }}"
+
+      - name: Rename APK
+        run: cp android/app/build/outputs/apk/debug/app-debug.apk "sa2-android-${{ matrix.abi }}-debug.apk"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: sa2-android-debug
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          name: sa2-android-${{ matrix.abi }}-debug
+          path: sa2-android-${{ matrix.abi }}-debug.apk
