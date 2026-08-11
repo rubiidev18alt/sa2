@@ -4,6 +4,7 @@ plugins {
 
 def sdlDir = file('../../ext/SDL2')
 def preprocHost = project.findProperty('SA2_PREPROC_HOST') ?: ''
+def requestedAbi = project.findProperty('SA2_ABI') ?: ''
 
 tasks.register('fetchSDL2') {
     outputs.dir(sdlDir)
@@ -37,7 +38,7 @@ android {
         versionName '0.1.0'
 
         ndk {
-            abiFilters 'arm64-v8a', 'armeabi-v7a', 'x86_64'
+            abiFilters requestedAbi ? [requestedAbi] : ['arm64-v8a', 'armeabi-v7a', 'x86_64']
         }
 
         externalNativeBuild {
