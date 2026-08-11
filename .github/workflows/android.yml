@@ -13,6 +13,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install SDL build dependencies
+        run: sudo apt-get update && sudo apt-get install -y libsdl2-dev
+
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
@@ -28,6 +31,11 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
+
+      - name: Generate game data assets
+        run: |
+          make -j2 PLATFORM=sdl GAME=GAME_SA2 GAME_NAME=sa2 tools
+          make -j2 PLATFORM=sdl GAME=GAME_SA2 GAME_NAME=sa2 || true
 
       - name: Build host preprocessor
         run: |
