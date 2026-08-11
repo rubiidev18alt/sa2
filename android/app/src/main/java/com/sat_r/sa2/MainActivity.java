@@ -1,6 +1,5 @@
 package com.sat_r.sa2;
 
-import android.app.Activity;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.RectF;
@@ -11,7 +10,6 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowInsets;
 import android.view.WindowInsetsController;
-import android.widget.FrameLayout;
 import android.content.Context;
 import android.util.SparseIntArray;
 
@@ -19,6 +17,11 @@ import org.libsdl.app.SDLActivity;
 
 public class MainActivity extends SDLActivity {
     private static native void nativeSetKey(int button, boolean down);
+
+    @Override
+    protected String[] getLibraries() {
+        return new String[] { "SDL2", "main" };
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -80,7 +83,7 @@ public class MainActivity extends SDLActivity {
 
         private boolean circle(float x, float y, float cx, float cy, float r) {
             float dx = x - sx(cx), dy = y - sy(cy);
-            return dx * dx + dy * dy <= Math.pow(sx(r), 2);
+            return dx * dx + dy * dy <= sx(r) * sx(r);
         }
 
         private boolean rect(float x, float y, float cx, float cy, float hw, float hh) {
@@ -104,8 +107,7 @@ public class MainActivity extends SDLActivity {
         }
 
         private void setPressed(int control, boolean down) {
-            if (control == NONE) return;
-            if (pressed[control] == down) return;
+            if (control == NONE || pressed[control] == down) return;
             pressed[control] = down;
             nativeSetKey(control, down);
             invalidate();
@@ -152,8 +154,7 @@ public class MainActivity extends SDLActivity {
 
             if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_POINTER_UP || action == MotionEvent.ACTION_CANCEL) {
                 if (action == MotionEvent.ACTION_CANCEL) {
-                    for (int i = 0; i < pointerControls.size(); i++)
-                        setPressed(pointerControls.valueAt(i), false);
+                    for (int i = 0; i < pointerControls.size(); i++) setPressed(pointerControls.valueAt(i), false);
                     pointerControls.clear();
                 } else {
                     releasePointer(event.getPointerId(index));
@@ -169,8 +170,8 @@ public class MainActivity extends SDLActivity {
             drawCircleButton(canvas, 54, 184, 43, (pressed[UP] || pressed[DOWN] || pressed[LEFT] || pressed[RIGHT]));
             drawCircleButton(canvas, 366, 181, 27, pressed[A]);
             drawCircleButton(canvas, 320, 202, 23, pressed[B]);
-            drawRectButton(canvas, 185, 216, 56, 18, pressed[SELECT], "SELECT");
-            drawRectButton(canvas, 123, 216, 56, 18, pressed[START], "START");
+            drawRectButton(canvas, 123, 216, 56, 18, pressed[SELECT], "SELECT");
+            drawRectButton(canvas, 185, 216, 56, 18, pressed[START], "START");
             drawRectButton(canvas, 76, 14, 40, 28, pressed[L], "L");
             drawRectButton(canvas, 310, 14, 40, 28, pressed[R], "R");
         }
