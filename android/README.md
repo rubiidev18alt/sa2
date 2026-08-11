@@ -6,7 +6,9 @@ This is an Android frontend for the existing portable SDL build. The game logic 
 
 Open the `android/` directory in Android Studio, let Gradle sync, and build `app`.
 
-The first build automatically downloads SDL2 `release-2.30.3` into `ext/SDL2`. The project uses Android Gradle Plugin 8.7.3, Gradle 8.9, Android API 35, and CMake 3.30.5.
+The first build automatically downloads SDL2 `release-2.30.3` into `ext/SDL2`. The project uses Android Gradle Plugin 8.7.3, Gradle 8.9, Android API 35, CMake 3.30.5, and NDK 26.3.11579264.
+
+For the CI build, the host-side `tools/preproc` executable is built with the host C++ compiler and supplied to the Android CMake project. This preserves the repository's normal embedded-data preprocessing step without attempting to build the host tool for an Android ABI.
 
 Command-line build from the repository root:
 
