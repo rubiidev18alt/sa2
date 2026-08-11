@@ -21,7 +21,7 @@
 #include <cstdio>
 #include <string>
 #include <stack>
-#include <fstream>
+#include <new>
 #include "preproc.h"
 #include "asm_file.h"
 #include "c_file.h"
@@ -152,15 +152,10 @@ int main(int argc, char **argv)
     if (!g_charmap)
         FATAL_ERROR("Failed to allocate space for Charmap.\n");
 
-    std::streambuf *oldBuffer = nullptr;
-    std::ofstream output;
     if (argc == MAX_ARGC)
     {
-        output.open(argv[4], std::ios::out | std::ios::trunc);
-        if (!output)
+        if (std::freopen(argv[4], "w", stdout) == nullptr)
             FATAL_ERROR("Could not open output file '%s'.\n", argv[4]);
-        oldBuffer = std::cout.rdbuf(output.rdbuf());
-        std::setvbuf(stdout, nullptr, _IONBF, 0);
     }
 
     char* extension = GetFileExtension(argv[1]);
@@ -174,7 +169,5 @@ int main(int argc, char **argv)
     else
         FATAL_ERROR("\"%s\" has an unknown file extension of \"%s\".\n", argv[1], extension);
 
-    if (oldBuffer != nullptr)
-        std::cout.rdbuf(oldBuffer);
     return 0;
 }
