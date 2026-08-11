@@ -40,6 +40,18 @@ else()
     target_compile_options(sa2_preproc_host PRIVATE -O2 -Wno-unused-parameter)
 endif()
 
+if(ANDROID_ABI MATCHES "^(arm64-v8a|armeabi-v7a)$")
+    set(SA2_CPU_ARCH_ARM 1)
+else()
+    set(SA2_CPU_ARCH_ARM 0)
+endif()
+
+if(ANDROID_ABI MATCHES "^(x86|x86_64)$")
+    set(SA2_CPU_ARCH_X86 1)
+else()
+    set(SA2_CPU_ARCH_X86 0)
+endif()
+
 file(GLOB_RECURSE SA2_SOURCES CONFIGURE_DEPENDS "${SA2_ROOT}/src/*.c")
 list(FILTER SA2_SOURCES EXCLUDE REGEX ".*/src/platform/win32/.*")
 list(FILTER SA2_SOURCES EXCLUDE REGEX ".*/src/platform/ps2/.*")
@@ -60,8 +72,8 @@ set(SA2_CPP_DEFINES
     -DPLATFORM_SDL=1
     -DPLATFORM_WIN32=0
     -DPLATFORM_ANDROID=1
-    -DCPU_ARCH_X86=0
-    -DCPU_ARCH_ARM=0
+    -DCPU_ARCH_X86=${SA2_CPU_ARCH_X86}
+    -DCPU_ARCH_ARM=${SA2_CPU_ARCH_ARM}
     -DPORTABLE=1
     -DDEBUG=0
     -DENABLE_DECOMP_CREDITS=1
@@ -92,7 +104,7 @@ add_library(main SHARED ${SA2_GENERATED_SOURCES})
 target_compile_definitions(main PRIVATE
     GAME=GAME_SA2 GAME_REGION=USA GAME_VARIANT=DEFAULT
     PLATFORM_GBA=0 PLATFORM_SDL=1 PLATFORM_WIN32=0 PLATFORM_ANDROID=1
-    CPU_ARCH_X86=0 CPU_ARCH_ARM=0 PORTABLE=1 DEBUG=0
+    CPU_ARCH_X86=${SA2_CPU_ARCH_X86} CPU_ARCH_ARM=${SA2_CPU_ARCH_ARM} PORTABLE=1 DEBUG=0
     ENABLE_DECOMP_CREDITS=1 TITLE_BAR=sa2_android
 )
 target_include_directories(main PRIVATE
