@@ -26,6 +26,7 @@ tasks.configureEach {
 android {
     namespace 'com.sat_r.sa2'
     compileSdk 35
+    ndkVersion '26.3.11579264'
 
     defaultConfig {
         applicationId 'com.sat_r.sa2'
