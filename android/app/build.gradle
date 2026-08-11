@@ -3,6 +3,7 @@ plugins {
 }
 
 def sdlDir = file('../../ext/SDL2')
+def preprocHost = project.findProperty('SA2_PREPROC_HOST') ?: ''
 
 tasks.register('fetchSDL2') {
     outputs.dir(sdlDir)
@@ -42,7 +43,7 @@ android {
         externalNativeBuild {
             cmake {
                 cppFlags ''
-                arguments '-DANDROID_STL=c++_shared'
+                arguments '-DANDROID_STL=c++_shared', "-DSA2_PREPROC_HOST=${preprocHost}"
             }
         }
     }
