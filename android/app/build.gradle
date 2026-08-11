@@ -2,6 +2,27 @@ plugins {
     id 'com.android.application'
 }
 
+def sdlDir = file('../../ext/SDL2')
+
+tasks.register('fetchSDL2') {
+    outputs.dir(sdlDir)
+    doLast {
+        if (!file("${sdlDir}/CMakeLists.txt").exists()) {
+            sdlDir.parentFile.mkdirs()
+            exec {
+                commandLine 'git', 'clone', '--depth', '1', '--branch', 'release-2.30.3',
+                        'https://github.com/libsdl-org/SDL.git', sdlDir.absolutePath
+            }
+        }
+    }
+}
+
+tasks.configureEach {
+    if (name.startsWith('configureCMake') || name.startsWith('pre')) {
+        dependsOn(tasks.named('fetchSDL2'))
+    }
+}
+
 android {
     namespace 'com.sat_r.sa2'
     compileSdk 35
