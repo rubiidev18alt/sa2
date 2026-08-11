@@ -29,9 +29,24 @@ jobs:
         with:
           gradle-version: '8.9'
 
+      - name: Build host preprocessor
+        run: |
+          mkdir -p android/host-tools
+          g++ -std=c++11 -O2 \
+            tools/preproc/preproc.cpp \
+            tools/preproc/asm_file.cpp \
+            tools/preproc/c_file.cpp \
+            tools/preproc/charmap.cpp \
+            tools/preproc/string_parser.cpp \
+            tools/preproc/utf8.cpp \
+            tools/preproc/ext/gbagfx/jasc_pal.cpp \
+            -Itools/preproc \
+            -Itools/preproc/ext/gbagfx \
+            -o android/host-tools/sa2_preproc
+
       - name: Build debug APK
         working-directory: android
-        run: gradle assembleDebug
+        run: gradle assembleDebug -PSA2_PREPROC_HOST="$GITHUB_WORKSPACE/android/host-tools/sa2_preproc"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
