@@ -80,7 +80,7 @@ foreach(SOURCE IN LISTS SA2_SOURCES)
             -I${SA2_ROOT}/include
             -I${SDL2_DIR}/include
             "${SOURCE}" -o "${PP_FILE}"
-        COMMAND sa2_preproc_host "${PP_FILE}" sdl "" "${GENERATED_FILE}"
+        COMMAND $<TARGET_FILE:sa2_preproc_host> "${PP_FILE}" sdl "" "${GENERATED_FILE}"
         DEPENDS "${SOURCE}" sa2_preproc_host
         WORKING_DIRECTORY "${SA2_ROOT}"
         VERBATIM
