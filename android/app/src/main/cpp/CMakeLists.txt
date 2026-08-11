@@ -27,6 +27,7 @@ list(FILTER SA2_SOURCES EXCLUDE REGEX ".*/src/platform/pret_sdl/.*")
 list(APPEND SA2_SOURCES
     "${CMAKE_CURRENT_LIST_DIR}/../../../../../src/platform/pret_sdl/sdl2.c"
     "${CMAKE_CURRENT_LIST_DIR}/../../../../../libagbsyscall/libagbsyscall.c"
+    "${CMAKE_CURRENT_LIST_DIR}/android_bridge.c"
 )
 
 add_library(main SHARED ${SA2_SOURCES})
