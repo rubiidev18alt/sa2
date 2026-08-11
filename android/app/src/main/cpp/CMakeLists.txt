@@ -20,8 +20,6 @@ set(SDL_SHARED ON CACHE BOOL "" FORCE)
 set(SDL_STATIC OFF CACHE BOOL "" FORCE)
 add_subdirectory("${SDL2_DIR}" "${CMAKE_CURRENT_BINARY_DIR}/SDL2" EXCLUDE_FROM_ALL)
 
-# The normal project build runs every C file through tools/preproc before the
-# compiler. This is required because game assets use INCBIN/INCPAL macros.
 add_executable(sa2_preproc_host
     "${PREPROC_ROOT}/preproc.cpp"
     "${PREPROC_ROOT}/asm_file.cpp"
@@ -79,8 +77,8 @@ foreach(SOURCE IN LISTS SA2_SOURCES)
         COMMAND ${CMAKE_COMMAND} -E make_directory "${SA2_GENERATED_DIR}"
         COMMAND ${CMAKE_C_COMPILER} -E -P
             ${SA2_CPP_DEFINES}
-            -I"${SA2_ROOT}/include"
-            -I"${SDL2_DIR}/include"
+            -I${SA2_ROOT}/include
+            -I${SDL2_DIR}/include
             "${SOURCE}" -o "${PP_FILE}"
         COMMAND sa2_preproc_host "${PP_FILE}" sdl "" "${GENERATED_FILE}"
         DEPENDS "${SOURCE}" sa2_preproc_host
