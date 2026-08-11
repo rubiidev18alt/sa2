@@ -1,0 +1,83 @@
+name: Android SA2-only build
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Android SA2-only ${{ matrix.abi }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        abi:
+          - arm64-v8a
+          - armeabi-v7a
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Remove Sonic Advance 1 sources and assets
+        run: |
+          set -eux
+          # Destructive only inside this temporary CI checkout.
+          find src data graphics sound include asm -type f -o -type d | grep -Ei '(^|/)(sa1|sonic.?advance.?1)(/|$|_)' | sort -r | xargs -r rm -rf
+          find . -type f \( -iname '*sa1*' -o -iname '*sonic*advance*1*' \) \
+            -not -path './.git/*' \
+            -not -path './android/*' \
+            -print -delete
+          echo 'Remaining SA1 references:'
+          grep -RniE 'GAME_SA1|GAME_NAME.*sa1|/sa1/|sa1/' \
+            --exclude-dir=.git --exclude-dir=build --exclude-dir=android . || true
+
+      - name: Install SDL and asset build dependencies
+        run: sudo apt-get update && sudo apt-get install -y build-essential libsdl2-dev libpng-dev clang
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: 'platforms;android-35 build-tools;35.0.0 cmake;3.30.5 ndk;26.3.11579264'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Build SA2-only asset tools and assets
+        run: |
+          make -j2 PLATFORM=sdl GAME=GAME_SA2 GAME_NAME=sa2 NODEP=0 tools
+          make -j2 PLATFORM=sdl GAME=GAME_SA2 GAME_NAME=sa2 NODEP=0 sdl
+
+      - name: Build host preprocessor
+        run: |
+          mkdir -p android/host-tools
+          g++ -std=c++11 -O2 \
+            tools/preproc/preproc.cpp \
+            tools/preproc/asm_file.cpp \
+            tools/preproc/c_file.cpp \
+            tools/preproc/charmap.cpp \
+            tools/preproc/string_parser.cpp \
+            tools/preproc/utf8.cpp \
+            tools/preproc/ext/gbagfx/jasc_pal.cpp \
+            -Itools/preproc \
+            -Itools/preproc/ext/gbagfx \
+            -o android/host-tools/sa2_preproc
+
+      - name: Build debug APK
+        working-directory: android
+        run: gradle assembleDebug -PSA2_PREPROC_HOST="$GITHUB_WORKSPACE/android/host-tools/sa2_preproc" -PSA2_ABI="${{ matrix.abi }}"
+
+      - name: Rename APK
+        run: cp app/build/outputs/apk/debug/app-debug.apk "sa2-only-android-${{ matrix.abi }}-debug.apk"
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: sa2-only-android-${{ matrix.abi }}-debug
+          path: sa2-only-android-${{ matrix.abi }}-debug.apk
