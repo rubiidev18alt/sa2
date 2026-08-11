@@ -20,20 +20,33 @@ set(SDL_SHARED ON CACHE BOOL "" FORCE)
 set(SDL_STATIC OFF CACHE BOOL "" FORCE)
 add_subdirectory("${SDL2_DIR}" "${CMAKE_CURRENT_BINARY_DIR}/SDL2" EXCLUDE_FROM_ALL)
 
-add_executable(sa2_preproc_host
-    "${PREPROC_ROOT}/preproc.cpp"
-    "${PREPROC_ROOT}/asm_file.cpp"
-    "${PREPROC_ROOT}/c_file.cpp"
-    "${PREPROC_ROOT}/charmap.cpp"
-    "${PREPROC_ROOT}/string_parser.cpp"
-    "${PREPROC_ROOT}/utf8.cpp"
-    "${PREPROC_ROOT}/ext/gbagfx/jasc_pal.cpp"
-)
-target_include_directories(sa2_preproc_host PRIVATE
-    "${PREPROC_ROOT}"
-    "${PREPROC_ROOT}/ext/gbagfx"
-)
-target_compile_options(sa2_preproc_host PRIVATE -O2 -Wno-unused-parameter)
+# The Android toolchain targets the device ABI, so the data preprocessor must
+# be a host executable. CI/Gradle supplies SA2_PREPROC_HOST; a native host build
+# is retained as a fallback for desktop CMake environments.
+if(SA2_PREPROC_HOST)
+    if(NOT EXISTS "${SA2_PREPROC_HOST}")
+        message(FATAL_ERROR "SA2_PREPROC_HOST does not exist: ${SA2_PREPROC_HOST}")
+    endif()
+    add_executable(sa2_preproc_host IMPORTED GLOBAL)
+    set_target_properties(sa2_preproc_host PROPERTIES
+        IMPORTED_LOCATION "${SA2_PREPROC_HOST}"
+    )
+else()
+    add_executable(sa2_preproc_host
+        "${PREPROC_ROOT}/preproc.cpp"
+        "${PREPROC_ROOT}/asm_file.cpp"
+        "${PREPROC_ROOT}/c_file.cpp"
+        "${PREPROC_ROOT}/charmap.cpp"
+        "${PREPROC_ROOT}/string_parser.cpp"
+        "${PREPROC_ROOT}/utf8.cpp"
+        "${PREPROC_ROOT}/ext/gbagfx/jasc_pal.cpp"
+    )
+    target_include_directories(sa2_preproc_host PRIVATE
+        "${PREPROC_ROOT}"
+        "${PREPROC_ROOT}/ext/gbagfx"
+    )
+    target_compile_options(sa2_preproc_host PRIVATE -O2 -Wno-unused-parameter)
+endif()
 
 file(GLOB_RECURSE SA2_SOURCES CONFIGURE_DEPENDS
     "${SA2_ROOT}/src/*.c"
