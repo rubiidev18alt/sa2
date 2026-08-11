@@ -11,6 +11,7 @@ extern "C" {
 void AndroidTouch_Init(void);
 void AndroidTouch_HandleEvent(const SDL_Event *event);
 u16 AndroidTouch_GetKeys(void);
+void AndroidTouch_Draw(SDL_Renderer *renderer);
 
 #ifdef __cplusplus
 }
